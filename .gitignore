@@ -1,0 +1,19 @@
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# Archivos de configuración sensible
+.env
+
+# Archivos temporales y resultados (opcional, para que no subas basura)
+temp_chunk_*.pdf
+resultado_final.md
+reporte_limpio.html
+datos.xlsx
+markdowns/
+entradas/test.pdf
+
+# Carpetas de Python
+__pycache__/
+*.pyc
