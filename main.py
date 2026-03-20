@@ -77,12 +77,42 @@ def procesar_pdf(ruta_pdf):
     return texto_md_completo
 
 # =========================
-# GENERAR HTML → Retorna String HTML
+# GENERAR HTML → Retorna String HTML completo
 # =========================
 def generar_html(contenido_md):
-    print("--- Generando HTML en memoria ---")
+    print("--- Generando HTML estructurado ---")
+
+    # Recreamos el CSS que usábamos en Flask
+    CSS = """
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 8px; max-width: 1000px; margin: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; }
+        th { background: #2c3e50; color: white; padding: 10px; }
+        td { padding: 8px; border: 1px solid #ddd; text-align: right; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+    </style>
+    """
 
     contenido = limpiar_notacion_cientifica(contenido_md)
-    # Convertimos a HTML y lo retornamos
-    html = markdown.markdown(contenido, extensions=['tables'])
-    return html
+    html_tablas = markdown.markdown(contenido, extensions=['tables'])
+
+    # Ensamblamos la página web completa en un solo string
+    pagina_completa = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Reporte de Extracto</title>
+        {CSS}
+    </head>
+    <body>
+        <div class="container">
+            <h2>📊 Detalle de Movimientos Procesados</h2>
+            {html_tablas}
+        </div>
+    </body>
+    </html>
+    """
+    
+    return pagina_completa
