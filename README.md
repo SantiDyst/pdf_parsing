@@ -1,26 +1,29 @@
-# 📄 PDF Intelligent Parser & Web Reporter
+# 📄 PDF Parser Web App (Flask)
 
-Este proyecto es un extractor avanzado de datos para PDFs complejos (Leyes, Estatutos y Reportes con tablas) optimizado para ejecutarse en hardware con recursos limitados (probado en **Intel i3 con 8GB de RAM**).
+Una aplicación web ligera construida con Flask para extraer información estructurada (tablas y datos) de extractos bancarios en PDF y visualizarla en un formato HTML limpio.
 
-Utiliza el motor **Docling** para reconstruir estructuras jerárquicas y tablas de forma precisa, exportando los resultados a un formato Markdown limpio y reportes HTML interactivos.
+## 🚀 Características Principales
 
-## ✨ Características Principales
+*   **Interfaz Web Simple:** Sube archivos PDF directamente desde el navegador de forma intuitiva.
+*   **Procesamiento en Memoria:** Convierte el PDF a Markdown y luego a HTML "al vuelo", sin generar archivos intermedios en el disco.
+*   **Limpieza Automática:** El sistema elimina el PDF subido inmediatamente después de procesarlo para no consumir espacio en el servidor.
+*   **Extracción de Datos Precisa:** Utiliza `docling` para mantener la estructura de las tablas originales y aplica limpieza con expresiones regulares (RegEx) para corregir formatos numéricos y notación científica.
 
-- **Procesamiento por Chunks:** Divide PDFs extensos (60+ páginas) para procesarlos por lotes, evitando errores de memoria (`std::bad_alloc`).
-- **Extracción Digital Optimizada:** Configurado para lectura de texto nativo (sin OCR innecesario), lo que reduce drásticamente el uso de CPU y RAM.
-- **Corrector de Notación Científica:** Limpieza automática de datos numéricos (convierte formatos como `-4.59e+06` a moneda contable `-4.590.000,00`).
-- **Visor Web Automático:** Genera reportes HTML con CSS profesional que se abren automáticamente al finalizar el proceso.
-- **Exportación Flexible:** Capacidad de unificar múltiples tablas en una sola hoja de Excel.
+## 🛠️ Tecnologías Utilizadas
 
-## 🛠️ Requisitos Técnicos
+*   **Backend:** Python 3, Flask, Werkzeug.
+*   **Procesamiento de PDF:** Docling, PyPDF.
+*   **Formatos:** Markdown a HTML.
+*   **Frontend:** HTML5, CSS3 integrado.
 
-- Python 3.10+
-- **Librerías clave:** `docling`, `pandas`, `markdown`, `pypdf`, `openpyxl`.
-- **Hardware recomendado:** Mínimo 8GB de RAM.
+## 📂 Estructura del Proyecto
 
-## 🚀 Instalación y Uso
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone [https://github.com/tu-usuario/pdf_parsing.git](https://github.com/tu-usuario/pdf_parsing.git)
-   cd pdf_parsing
+```text
+pdf_parsing/
+├── app.py                 # Servidor web y rutas de Flask
+├── main.py                # Lógica de procesamiento (Docling/PyPDF)
+├── requirements.txt       # Dependencias del proyecto
+├── uploads/               # Carpeta temporal para subidas (se auto-limpia)
+└── templates/
+    ├── index.html         # Formulario de subida de PDF
+    └── resultado.html     # Vista de la tabla procesada
