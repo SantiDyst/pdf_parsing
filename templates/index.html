@@ -5,26 +5,126 @@
     <title>PDF Parser - Inicio</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background: #f4f4f9; }
-        .card { background: white; padding: 30px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .error { color: white; background: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
-        button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #2980b9; }
+        .card { background: white; padding: 30px; border-radius: 8px; max-width: 600px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .error { color: white; background: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 20px; display: none; }
+        button { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        
+        /* Estilos de Progreso */
+        #progress-container { margin-top: 20px; display: none; }
+        .status-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px; min-height: 50px; }
+        .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #09f; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #log-area { font-family: monospace; font-size: 0.85em; color: #666; max-height: 120px; overflow-y: auto; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+
+        /* ESTILOS DE RESULTADO (Copiados de resultado.html) */
+        .result-wrapper { max-width: 1100px; margin: auto; display: none; }
+        .container-resultado { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; font-size: 0.9em; }
+        th { background: #2c3e50; color: white; padding: 12px; text-align: center; }
+        td { padding: 10px; border: 1px solid #ddd; text-align: right; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .btn-volver { display: inline-block; margin-bottom: 20px; padding: 10px 15px; background: #2ecc71; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-volver:hover { background: #27ae60; }
     </style>
 </head>
 <body>
-    <div class="card">
+    <!-- Vista de Carga -->
+    <div class="card" id="upload-card">
         <h1>Subir Extracto (PDF)</h1>
         
-        {% if error %}
-            <div class="error">
-                <strong>Error:</strong> {{ error }}
-            </div>
-        {% endif %}
+        <div id="error-box" class="error"></div>
 
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="pdf" accept=".pdf" required style="margin-bottom: 20px; display: block;">
-            <button type="submit">Procesar Documento</button>
+        <form id="upload-form">
+            <input type="file" id="pdf-file" name="pdf" accept=".pdf" required style="margin-bottom: 20px; display: block;">
+            <button type="submit" id="submit-btn">Procesar Documento</button>
         </form>
+
+        <div id="progress-container">
+            <h3>Procesando...</h3>
+            <div class="status-box">
+                <div class="spinner"></div>
+                <span id="current-status">Iniciando...</span>
+                <div id="log-area"></div>
+            </div>
+        </div>
     </div>
+
+    <!-- Vista de Resultado (Estilo resultado.html) -->
+    <div class="result-wrapper" id="result-wrapper">
+        <button class="btn-volver" onclick="location.reload()">⬅ Volver a subir otro PDF</button>
+        <div class="container-resultado" id="html-content">
+            <!-- El contenido se inyecta aquí -->
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const currentStatus = document.getElementById('current-status');
+        const logArea = document.getElementById('log-area');
+        const errorBox = document.getElementById('error-box');
+        const uploadCard = document.getElementById('upload-card');
+        const resultWrapper = document.getElementById('result-wrapper');
+        const htmlContent = document.getElementById('html-content');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            errorBox.style.display = 'none';
+            submitBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            logArea.innerHTML = '';
+            
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/procesar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Error en la carga del archivo');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.substring(6));
+                            
+                            if (data.status === 'processing') {
+                                currentStatus.innerText = data.msg;
+                                logArea.innerHTML += `> ${data.msg}<br>`;
+                                logArea.scrollTop = logArea.scrollHeight;
+                            } else if (data.status === 'completed') {
+                                // Aplicar el estilo anterior
+                                uploadCard.style.display = 'none';
+                                resultWrapper.style.display = 'block';
+                                htmlContent.innerHTML = data.html;
+                                window.scrollTo(0, 0);
+                            } else if (data.status === 'error') {
+                                throw new Error(data.msg);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                errorBox.innerText = `Error: ${err.message}`;
+                errorBox.style.display = 'block';
+                submitBtn.disabled = false;
+                progressContainer.style.display = 'none';
+            }
+        };
+    </script>
 </body>
 </html>
